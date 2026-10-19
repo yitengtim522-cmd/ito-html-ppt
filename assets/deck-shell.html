@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>动效演示文稿 · 页内节奏复刻样例（泛用版）</title>
+<style>
+/* =====================================================================
+   0. 主题令牌：换配色只改这一段
+   ---------------------------------------------------------------------
+   派生自 05_护行有序_答辩幻灯片_V5.1_动画版.html 的原始配色。
+   原版把 60 多个色值写死在 239 条规则里，这里收敛成 16 个变量。
+   ===================================================================== */
+body{
+  --paper:#f7f8f5;          /* 浅色页底 */
+  --ink:#1a2b39;            /* 正文墨色 */
+  --muted:#57717d;          /* 注释灰 */
+  --accent:#247d73;         /* 主色：标题线、序号、强调 */
+  --accent-soft:#73d2c3;    /* 辅助色：大序号、图示 */
+  --line:#c9d8d6;           /* 分隔线 */
+  --table-head:#e4efe9;     /* 表头底 */
+  --dark:#112b3b;           /* 深色页底 */
+  --dark-ink:#f5f8f8;       /* 深色页正文 */
+  --dark-muted:#aec6ce;     /* 深色页注释 */
+  --stage:#101d29;          /* 舞台外壳 */
+  --cover:#0f2e3a;          /* 封面底 */
+  --cover-ink:#d9ecea;      /* 封面副标题 */
+  --cover-sub:#9cc6c1;      /* 封面辅助文字 */
+  --emph:rgba(36,125,115,.075);        /* 浅色页强调底 */
+  --emph-dark:rgba(115,210,195,.13);   /* 深色页强调底 */
+}
+body[data-palette="blue"]{
+  --paper:#f6f8fa; --ink:#16283a; --muted:#54707f;
+  --accent:#1f5f8b; --accent-soft:#7cc4e8; --line:#cdd9e2; --table-head:#e3ecf3;
+  --dark:#10263a; --dark-ink:#f4f8fb; --dark-muted:#a9c4d4; --stage:#0b1a26;
+  --cover:#0d2436; --cover-ink:#d7e6f0; --cover-sub:#9bbccf;
+  --emph:rgba(31,95,139,.075); --emph-dark:rgba(124,196,232,.13);
+}
+body[data-palette="graphite"]{
+  --paper:#f7f6f2; --ink:#1e2a2e; --muted:#5e6e73;
+  --accent:#4d5f68; --accent-soft:#a9c2cb; --line:#d5d2ca; --table-head:#e8e5dd;
+  --dark:#1b262b; --dark-ink:#f4f4f1; --dark-muted:#b4c3c8; --stage:#121a1e;
+  --cover:#162026; --cover-ink:#dde8ea; --cover-sub:#9fb4ba;
+  --emph:rgba(77,95,104,.08); --emph-dark:rgba(169,194,203,.14);
+}
+
+/* ============ 1. 舞台：固定 1600×900，等比缩放 ============ */
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden}
+body{font-family:"Microsoft YaHei","Noto Sans CJK SC",sans-serif;background:var(--stage);color:var(--ink)}
+button,select{font:inherit}
+#viewport{position:absolute;inset:0 0 58px;display:grid;place-items:center;overflow:hidden}
+#deck{position:absolute;left:50%;top:50%;margin-left:-800px;margin-top:-450px;width:1600px;height:900px;transform-origin:center center}
+
+/* ============ 2. 版式：浅色 / 深色两套 ============ */
+.slide{position:absolute;inset:0;display:none;padding:68px 86px;background:var(--paper);color:var(--ink);overflow:hidden}
+.slide.active{display:block}
+.slide.dark,.slide.paper.dark{background:var(--dark);color:var(--dark-ink)}
+.slide::before{content:"";position:absolute;left:0;top:0;right:0;height:5px;background:linear-gradient(90deg,var(--accent),var(--accent-soft) 42%,transparent 76%)}
+.page-number{position:absolute;right:86px;bottom:22px;font-size:17px;color:var(--muted);font-variant-numeric:tabular-nums}
+.tmpl-brand{position:absolute;left:86px;bottom:22px;font-size:17px;letter-spacing:1px;color:var(--muted)}
+.dark .tmpl-brand,.dark .page-number{color:var(--dark-muted)}
+.slide>h2{font-size:48px;line-height:1.35;margin:0 0 46px;font-weight:650;letter-spacing:-1px}
+.slide p{font-size:29px;line-height:1.65;margin:0 0 22px}
+.slide h3{font-size:32px;line-height:1.4;margin:0 0 14px;font-weight:650}
+code{font-family:Consolas,"Courier New",monospace;font-size:.9em;color:var(--accent);background:rgba(36,125,115,.06);padding:1px 5px;border-radius:3px}
+.bottom-note{position:absolute;bottom:56px;left:86px;right:86px;font-size:21px!important;color:var(--muted);line-height:1.45!important;margin:0!important}
+.dark .bottom-note{color:var(--dark-muted)}
+
+/* ============ 3. 封面 ============ */
+.cover{padding:0;background:var(--cover);color:var(--dark-ink)}
+.cover-copy{position:absolute;left:86px;top:158px;width:860px;z-index:2}
+.occasion{font-size:23px!important;color:var(--cover-sub);letter-spacing:2px;margin:0 0 44px!important}
+.cover h1{font-size:55px;line-height:1.5;font-weight:500;letter-spacing:-1px;margin:0}
+.cover h1 strong,.cover h1 span{display:block}
+.cover h1 strong{font-size:82px;color:#fff;margin-bottom:12px;letter-spacing:-2px}
+.cover h1 span{font-size:44px;color:var(--cover-ink);line-height:1.5}
+.cover-sub{font-size:27px!important;color:var(--cover-sub);margin-top:30px!important}
+.identity{font-size:20px!important;color:var(--cover-sub);opacity:.8;margin-top:52px!important;line-height:1.9!important}
+.cover-card{position:absolute;right:86px;top:186px;width:474px;padding:30px 32px 26px;border:1px solid var(--accent);border-radius:8px;background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.01))}
+.cover-card h3{font-size:18px;letter-spacing:2px;color:var(--accent-soft);margin:0 0 22px;font-weight:600}
+.cover-card .row{margin-bottom:17px}
+.cover-card .row b{display:block;font-size:17px;font-weight:500;color:var(--cover-ink);margin-bottom:8px}
+.cover-card .row b i{font-style:normal;color:var(--cover-sub);margin-left:8px;font-variant-numeric:tabular-nums}
+.track{position:relative;height:8px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden}
+.track i{position:absolute;top:0;bottom:0;border-radius:4px;background:var(--accent-soft)}
+.cover-card .cap{font-size:16px!important;color:var(--cover-sub);margin:20px 0 0!important;line-height:1.6!important;border-top:1px solid rgba(255,255,255,.16);padding-top:16px}
+
+/* ============ 4. 各版式 ============ */
+.problem-layout{display:grid;grid-template-columns:.95fr 1.05fr;gap:85px;margin-top:64px}
+.lead-block{border-left:5px solid var(--accent);padding-left:36px}
+.big-line{font-size:40px!important;line-height:1.55!important;font-weight:600;color:var(--ink)}
+.dark .big-line{color:var(--dark-ink)}
+.lead-block>p:last-child{margin-top:34px;color:var(--muted)}
+.item{display:flex;gap:26px;border-bottom:1px solid var(--line);padding:0 0 20px;margin-bottom:26px}
+.item:last-child{border-bottom:none}
+.ordinal{font-size:24px;color:var(--accent);padding-top:7px;font-variant-numeric:tabular-nums}
+.item p{font-size:26px;margin:0;line-height:1.6}
+.value-rows{margin-top:34px}
+.value-rows article{display:grid;grid-template-columns:230px 1fr;gap:34px;padding:22px 12px;border-bottom:1px solid var(--line)}
+.value-rows article>span{font-size:29px;color:var(--accent);padding-top:3px}
+.value-rows h3{font-size:31px;margin-bottom:8px}
+.value-rows p{font-size:25px;margin:0;line-height:1.6}
+.hardware{width:100%;border-collapse:collapse;font-size:24px;line-height:1.5}
+.hardware th,.hardware td{padding:19px 18px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+.hardware thead{background:var(--table-head)}
+.hardware th:first-child{width:250px}
+.hardware th:nth-child(2){width:520px}
+.hardware td:first-child{color:var(--accent);font-weight:600}
+.hardware-base{font-size:24px!important;color:var(--accent);margin-top:26px!important}
+.flow-line{display:grid;grid-template-columns:repeat(4,1fr);gap:28px;margin-top:76px}
+.flow-line>div{border-top:4px solid var(--accent);padding-top:20px}
+.flow-line b{font-size:52px;color:var(--accent-soft);display:block;margin-bottom:24px;font-variant-numeric:tabular-nums}
+.flow-line h3{font-size:34px}
+.flow-line p{font-size:25px;line-height:1.75}
+.lower-statement{display:flex;align-items:center;gap:52px;border-top:1px solid var(--line);margin-top:62px;padding-top:28px}
+.lower-statement strong{font-size:34px;color:var(--accent);white-space:nowrap}
+.lower-statement p{font-size:24px;margin:0;color:var(--muted)}
+.vision-line{display:grid;grid-template-columns:repeat(3,1fr);gap:45px;margin-top:92px}
+.vision-line article{border-top:2px solid var(--dark-muted);padding-top:22px}
+.vision-line span{font-size:23px;color:var(--accent-soft)}
+.vision-line h3{font-size:42px;margin-top:20px}
+.vision-line p{font-size:26px;line-height:1.75;color:var(--dark-muted)}
+.vision-result h2{font-size:40px;line-height:1.6;font-weight:500;color:var(--dark-ink);margin-top:58px}
+.value-close{padding-top:24px}
+.value-close>h2{font-size:60px;line-height:1.58;font-weight:500;margin:0}
+.closing-main{font-size:30px!important;color:var(--dark-muted);margin-top:32px!important}
+.closing-thanks{position:absolute;left:86px;bottom:96px;font-size:31px!important;color:#fff;margin:0!important}
+
+/* ---- 4b. 补充版式：依据行 / 2×2 / 图+文 / 左标题右条 / 左标题右块 / 两栏备查 ---- */
+.future-caption{font-size:21px!important;color:var(--accent);margin:-24px 0 20px!important;letter-spacing:1px}
+.source-rows{margin-top:34px}
+.source-rows article{display:grid;grid-template-columns:190px 1fr;gap:42px;padding:24px 12px;border-bottom:1px solid var(--line)}
+.source-rows article>b{font-size:28px;color:var(--accent);padding-top:3px;font-weight:600}
+.source-rows h3{font-size:30px;margin-bottom:8px}
+.source-rows p{font-size:25px;margin:0;line-height:1.6}
+
+.rigor-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;margin-top:52px}
+.rule-index{display:block;font-size:22px;color:var(--accent);margin-bottom:12px}
+.rigor-grid h3{font-size:32px}
+.rigor-grid p{font-size:26px;color:var(--muted);margin-bottom:32px;line-height:1.7}
+.dark .rigor-grid p{color:var(--dark-muted)}
+.dark .rule-index{color:var(--accent-soft)}
+
+.space-layout{display:grid;grid-template-columns:1000px 1fr;gap:52px;align-items:center;margin-top:18px}
+.photo-frame{height:580px;overflow:hidden;border:1px solid var(--line);background:#fff}
+.photo-frame img{width:100%;height:100%;object-fit:contain}
+.scenario-copy h3{font-size:31px}
+.scenario-copy p{font-size:26px;line-height:1.85;margin-top:22px}
+.scenario-result{font-size:33px;color:var(--accent);font-weight:650;margin:24px 0;line-height:1.6}
+.scenario-copy small{font-size:20px;line-height:1.6;color:var(--muted)}
+
+.wearable-layout{display:grid;grid-template-columns:1fr 1fr;gap:80px;margin-top:32px}
+.wearable-goal{border-left:5px solid var(--accent);padding-left:34px}
+.wearable-goal h2{font-size:50px;line-height:1.55;font-weight:500;margin:12px 0 28px}
+.wearable-goal p{font-size:27px;color:var(--muted)}
+.wearable-steps article{padding:18px 0;border-bottom:1px solid var(--line)}
+.wearable-steps article:last-child{border-bottom:none}
+.wearable-steps b{font-size:29px}
+.wearable-steps p{font-size:25px;margin:10px 0;line-height:1.6}
+
+.vr-layout{display:grid;grid-template-columns:1.05fr .95fr;gap:80px;margin-top:32px}
+.vr-purpose h2{font-size:46px;line-height:1.55;margin:20px 0 34px;font-weight:550}
+.vr-purpose p{font-size:27px;line-height:1.8;color:var(--muted)}
+.vr-details>div{border-bottom:1px solid var(--line);padding:15px 0}
+.vr-details>div:last-child{border-bottom:none}
+.vr-details h3{font-size:29px;margin-bottom:8px}
+.vr-details p{font-size:25px;line-height:1.6;margin:0 0 10px}
+
+.reference-layout{display:grid;grid-template-columns:1fr 1fr;gap:80px;margin-top:44px}
+.reference-layout h3{font-size:29px;color:var(--accent);margin-bottom:12px}
+.reference-layout p{font-size:25px;line-height:1.85;margin:0 0 28px}
+
+/* ============ 5. 控制层：动效时间轴 ============ */
+body.motion-deck #viewport{bottom:106px}
+body.motion-deck.presentation #viewport{inset:0}
+.motion-deck #motionBar{height:48px;bottom:58px;position:absolute;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:12px;background:#162e3d;color:#d2e4e9;border-bottom:1px solid #3a5260;font-size:14px;z-index:10}
+.motion-deck #motionBar button,.motion-deck #motionBar select{color:#e1f2f3;background:#234657;border:1px solid #4d6e7e;border-radius:5px;padding:5px 10px;cursor:pointer}
+.motion-deck #motionBar button[aria-pressed=true]{color:#0f2c30;background:#8ad4c3;border-color:#8ad4c3}
+.motion-deck #motionBar button:disabled,.motion-deck #motionBar select:disabled{opacity:.45;cursor:default}
+.motion-deck #motionBar button:focus-visible,.motion-deck #motionBar input:focus-visible,.motion-deck #motionBar select:focus-visible{outline:2px solid #8fe9d7;outline-offset:2px}
+.motion-deck #motionSeek{width:190px;accent-color:#8ad4c3;cursor:pointer}
+.motion-deck #motionTime{font-variant-numeric:tabular-nums;min-width:96px;font-size:12px;color:#b6cfd6;text-align:center}
+.motion-deck .motion-subtle{font-size:12px;color:#b7cbd5}
+.motion-deck #motionClock{position:absolute;width:1px;height:1px;pointer-events:none;opacity:0}
+.motion-unit{will-change:opacity,transform,background-color}
+body.motion-deck.presentation #motionBar{display:none}
+.motion-deck .slide.active::after{content:"";position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent-soft));transform:scaleX(var(--motion-progress,0));transform-origin:left center;pointer-events:none;z-index:5}
+.motion-deck.motion-off .slide.active::after{display:none}
+
+/* ============ 6. 导航条 / 讲稿 ============ */
+#controls{position:absolute;bottom:0;left:0;right:0;height:58px;background:#0a1722;color:#c5d4df;display:flex;align-items:center;justify-content:center;gap:16px;font-size:14px}
+#controls button,#controls select{background:#203744;color:#e4eef2;border:1px solid #415966;border-radius:5px;padding:7px 12px;cursor:pointer}
+#controls button:focus-visible{outline:2px solid #81d3c1}
+#controls button:disabled{opacity:.35;cursor:default}
+#counter{min-width:70px;text-align:center;font-variant-numeric:tabular-nums}
+.control-hint{color:#8fa7b7;margin-left:14px}
+#notes{position:fixed;right:20px;bottom:76px;width:min(620px,95vw);max-height:55vh;overflow:auto;background:#fffdf6;color:#20323d;box-shadow:0 4px 30px #0008;border-radius:8px;padding:24px;z-index:40;font-size:17px;line-height:1.8}
+#notes h3{margin:0 0 10px}
+#notes p{white-space:pre-wrap;margin:0 0 12px}
+#notes small{color:#4d6674}
+#notes[hidden]{display:none}
+.presentation #controls{display:none}
+.presentation #viewport{inset:0}
+
+@media(max-width:700px){
+  .control-hint{display:none}
+  #controls{gap:6px;font-size:12px}
+  #controls button,#controls select{padding:6px}
+  #jump{max-width:90px}
+  #print{display:none}
+  .motion-deck #motionBar{justify-content:flex-start;overflow-x:auto;gap:7px;padding:0 10px;white-space:nowrap}
+  .motion-deck #motionSeek{width:110px;min-width:110px}
+  .motion-deck .motion-subtle{display:none}
+}
+
+/* ============ 7. 打印：冻结末帧，一页一张 ============ */
+@media print{
+  @page{size:1600px 900px;margin:0}
+  html,body{overflow:visible;width:auto;height:auto;background:#fff}
+  #viewport,body.motion-deck #viewport{display:block;position:static;overflow:visible;inset:auto}
+  #deck{position:static;margin:0;width:1600px;height:auto;transform:none!important}
+  .slide,.slide.active{position:relative;display:block!important;width:1600px;height:900px;break-after:page;page-break-after:always;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+  .slide:last-child{break-after:auto}
+  #controls,#notes,#motionBar,#motionClock{display:none!important}
+  .motion-unit{opacity:1!important;transform:none!important;box-shadow:none!important;background-color:transparent!important}
+  .slide::after{display:none!important}
+}
+</style>
+</head>
+<body class="motion-deck" data-palette="teal">
+
+<main id="viewport">
+<div id="deck">
+
+<!-- ============================================================
+     SLIDES：在此处插入 <section class="slide ..."> 页面
+     可用版式见 references/layouts.md（13 种，含容量上限）
+     顺序建议：封面 → 问题 → 价值 → 依据 → 方法 → 表格 → 流程
+                → 三阶段(深) → 收尾(深) → 备查
+     以下为占位首页，开始写正文时整段替换掉
+     ============================================================ -->
+<section class="slide paper active" id="slide-1" aria-label="1 占位首页">
+  <h2 data-anim="rise" data-at="0" data-dur="600" data-dx="-18" data-dy="0">把这一页换成你的第一页</h2>
+  <p data-anim="rise" data-at="420" data-dur="700">1. 从 <code>references/layouts.md</code> 复制版式片段，粘贴到本段注释处。<br>2. 替换每页的 page-number 与 tmpl-brand。<br>3. 在 deck-data 里补一条对应的讲稿。</p>
+  <p class="bottom-note" data-anim="rise" data-at="900" data-dur="650" data-dy="7">改完运行 scripts/validate_deck.py 自检，再交付。</p>
+  <span class="page-number">01 / 01</span>
+  <div class="tmpl-brand">单位 · 项目名</div>
+</section>
+
+</div>
+</main>
+
+<div id="motionBar" role="group" aria-label="动画演示控制">
+  <button id="motionReplay" title="重播当前页 R">重播 R</button>
+  <button id="motionPause">暂停 P</button>
+  <span class="motion-subtle">页内动效</span>
+  <input id="motionSeek" type="range" min="0" max="8000" step="10" value="0" aria-label="拖动查看当前页动画进度">
+  <output id="motionTime"></output>
+  <button id="motionToggle" aria-pressed="true">动效：开 M</button>
+  <button id="motionAuto" aria-pressed="false">自动演示 A</button>
+  <select id="motionHold" aria-label="自动演示每页停留时间">
+    <option value="20">20秒/页</option>
+    <option value="25" selected>25秒/页</option>
+    <option value="35">35秒/页</option>
+  </select>
+  <select id="paletteSel" aria-label="配色方案">
+    <option value="teal" selected>配色：医院青</option>
+    <option value="blue">配色：工程蓝</option>
+    <option value="graphite">配色：石墨灰</option>
+  </select>
+</div>
+<div id="motionClock" aria-hidden="true"></div>
+
+<nav id="controls" aria-label="幻灯片控制">
+  <button id="prev" aria-label="上一页">上一页</button>
+  <span id="counter" aria-live="polite"></span>
+  <button id="next" aria-label="下一页">下一页</button>
+  <select id="jump" aria-label="跳转页面"></select>
+  <button id="toggleNotes" aria-expanded="false">讲稿 N</button>
+  <button id="fullscreen">全屏 F</button>
+  <button id="print">打印</button>
+  <span class="control-hint">← → 翻页　R 重播　P 暂停　M 动效开关　A 自动</span>
+</nav>
+
+<aside id="notes" hidden aria-label="本页讲稿">
+  <h3 id="note-title"></h3>
+  <p id="note-text"></p>
+  <small id="note-source"></small>
+</aside>
+
+<script type="application/json" id="deck-data">[{"title": "占位页：替换为你的内容", "notes": "这是外壳自带的占位页。开始制作时，把 HTML 里的这个 section 整段替换掉，并在 deck-data 里补一条对应记录。", "source": "deck-shell.html"}]</script>
+
+<script>
+/* =====================================================================
+   动效演示文稿引擎 · 单文件实现（泛用版）
+   结构：舞台缩放 → 导航 → 动效（主时钟 + 子动画同步）→ 控制层
+   ===================================================================== */
+(function(){
+'use strict';
+
+/* ---------- 0. 常量与元素 ---------- */
+const W = 1600, H = 900;
+const EASE      = 'cubic-bezier(.2,.75,.25,1)';   /* 入场：前快后慢 */
+const EASE_SOFT = 'cubic-bezier(.4,0,.2,1)';      /* 强调：进出对称 */
+
+const slides   = [...document.querySelectorAll('.slide')];
+const data     = JSON.parse(document.getElementById('deck-data').textContent);
+const viewport = document.getElementById('viewport');
+const deckEl   = document.getElementById('deck');
+const clockEl  = document.getElementById('motionClock');
+const seek     = document.getElementById('motionSeek');
+const timeOut  = document.getElementById('motionTime');
+const toggleBtn= document.getElementById('motionToggle');
+const pauseBtn = document.getElementById('motionPause');
+const autoBtn  = document.getElementById('motionAuto');
+const holdSel  = document.getElementById('motionHold');
+const paletteSel = document.getElementById('paletteSel');
+const replayBtn= document.getElementById('motionReplay');
+const jump     = document.getElementById('jump');
+const notesEl  = document.getElementById('notes');
+
+/* ---------- 1. 状态 ---------- */
+const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+let index = 0;
+let effects = [];          /* 当前页所有子动画（全部处于 paused） */
+let driver = null;         /* 主时钟动画 */
+let duration = 8000;       /* 当前页动效总时长 */
+let enabled = !reduce.matches;   /* 动效开关（跟随系统减弱动效偏好） */
+let auto = false;          /* 自动演示 */
+let playing = false;
+let active = 0;
+let raf = 0;
+let printState = null;
+let resumeHidden = false;
+
+const num = (v, d) => (v === undefined || v === null || v === '' ? d : Number(v));
+const cssVar = name => getComputedStyle(document.body).getPropertyValue(name).trim();
+
+/* ---------- 2. 舞台缩放 ---------- */
+function fit(){
+  const s = Math.min(viewport.clientWidth / W, viewport.clientHeight / H);
+  deckEl.style.transform = 'scale(' + s + ')';
+}
+
+/* ---------- 3. 导航 ---------- */
+data.forEach((s, i) => {
+  const o = document.createElement('option');
+  o.value = i;
+  o.textContent = String(i + 1).padStart(2, '0') + ' ' + s.title;
+  jump.appendChild(o);
+});
+
+function show(value){
+  const n = Math.max(0, Math.min(slides.length - 1, Number(value) || 0));
+  slides.forEach((s, k) => {
+    s.classList.toggle('active', k === n);
+    s.setAttribute('aria-hidden', String(k !== n));
+  });
+  index = n;
+  jump.value = n;
+  document.getElementById('counter').textContent = (n + 1) + ' / ' + slides.length;
+  document.getElementById('prev').disabled = n === 0;
+  document.getElementById('next').disabled = n === slides.length - 1;
+  document.getElementById('note-title').textContent = data[n].title;
+  document.getElementById('note-text').textContent  = data[n].notes;
+  document.getElementById('note-source').textContent = '依据：' + data[n].source;
+  history.replaceState(null, '', '#' + (n + 1));
+  window.deckState = { index: n + 1, total: slides.length, title: data[n].title };
+  build(n);
+}
+
+/* ---------- 4. 动效原语 ---------- */
+/* 子动画创建后立即 pause()，由主时钟逐帧写 currentTime —— 这是可拖动的关键 */
+function anim(el, frames, delay, dur, easing){
+  if (!el) return null;
+  el.classList.add('motion-unit');
+  const a = el.animate(frames, { delay: delay, duration: dur, fill: 'both', iterations: 1, easing: easing || EASE });
+  a.pause();
+  a.currentTime = 0;
+  effects.push(a);
+  return a;
+}
+
+function rise(el, delay, dur, dx, dy){
+  anim(el, [
+    { opacity: 0, transform: 'translate3d(' + dx + 'px,' + dy + 'px,0)' },
+    { opacity: 1, transform: 'none' }
+  ], delay, dur);
+}
+
+function zoom(el, delay, dur, scale){
+  anim(el, [
+    { opacity: 0, transform: 'scale(' + (scale - 0.02).toFixed(3) + ')' },
+    { opacity: 1, transform: 'scale(' + scale + ')' }
+  ], delay, dur);
+}
+
+function fade(el, delay, dur){
+  anim(el, [{ opacity: 0 }, { opacity: 1 }], delay, dur);
+}
+
+/* 强调：底色 0 → 8% → 8% → 0；左侧竖线同步。表格行把竖线画到首列 */
+function emphasis(el, delay, dur){
+  const dark = !!el.closest('.dark');
+  const tint = dark ? (cssVar('--emph-dark') || 'rgba(115,210,195,.13)')
+                    : (cssVar('--emph')      || 'rgba(36,125,115,.075)');
+  const rule = 'inset 3px 0 0 ' + (cssVar('--accent') || '#247d73');
+  anim(el, [
+    { backgroundColor: 'rgba(0,0,0,0)' },
+    { backgroundColor: tint, offset: .18 },
+    { backgroundColor: tint, offset: .72 },
+    { backgroundColor: 'rgba(0,0,0,0)' }
+  ], delay, dur, EASE_SOFT);
+
+  const lineTarget = el.tagName === 'TR' ? el.cells[0] : el;
+  if (lineTarget){
+    anim(lineTarget, [
+      { boxShadow: 'inset 3px 0 0 rgba(0,0,0,0)' },
+      { boxShadow: rule, offset: .18 },
+      { boxShadow: rule, offset: .72 },
+      { boxShadow: 'inset 3px 0 0 rgba(0,0,0,0)' }
+    ], delay, dur, EASE_SOFT);
+  }
+}
+
+/* ---------- 5. 编排：读 HTML 上的 data-* 属性 ---------- */
+function build(n){
+  stop();
+  active = n;
+  const slide = slides[n];
+  duration = num(slide.dataset.hold, 8000);   /* 每页时长：data-hold 可覆盖，默认 8 秒 */
+  seek.max = String(duration);
+
+  if (enabled){
+    /* 5.1 交错组：data-stagger=起始毫秒 data-gap=行间隔 */
+    slide.querySelectorAll('[data-stagger]').forEach(g => {
+      const base = num(g.dataset.stagger, 600);
+      const gap  = num(g.dataset.gap, 180);
+      [...g.children].forEach((c, k) => {
+        const at = base + k * gap;
+        rise(c, at, num(c.dataset.dur, 650), 0, num(c.dataset.dy, 22));
+        if (c.dataset.emph != null) emphasis(c, num(c.dataset.emph, 2200), num(c.dataset.emphDur, 1200));
+      });
+    });
+
+    /* 5.2 单元素：data-anim=rise|drift|zoom|fade */
+    slide.querySelectorAll('[data-anim]').forEach(el => {
+      const kind = el.dataset.anim;
+      const at   = num(el.dataset.at, 0);
+      const dur  = num(el.dataset.dur, 650);
+      if (kind === 'rise')       rise(el, at, dur, num(el.dataset.dx, 0), num(el.dataset.dy, 22));
+      else if (kind === 'drift') rise(el, at, dur, num(el.dataset.dx, -26), 0);
+      else if (kind === 'zoom')  zoom(el, at, dur, num(el.dataset.scale, 1.035));
+      else if (kind === 'fade')  fade(el, at, dur);
+    });
+  }
+
+  /* 5.3 主时钟：一个不可见的动画充当时间源 */
+  const len = auto ? Math.max(duration, Number(holdSel.value) * 1000) : duration;
+  driver = clockEl.animate([{ opacity: 0 }, { opacity: 0 }], { duration: len, fill: 'both', iterations: 1 });
+  driver.pause();
+  driver.currentTime = enabled ? 0 : duration;
+  driver.onfinish = onFinish;
+
+  sync();
+  if (enabled || auto) play();
+}
+
+/* ---------- 6. 时间同步 ---------- */
+const at = () => Math.max(0, Number(driver && driver.currentTime) || 0);
+
+function stop(){
+  cancelAnimationFrame(raf); raf = 0;
+  if (driver){ driver.onfinish = null; driver.cancel(); driver = null; }
+  effects.forEach(a => a.cancel());
+  effects = [];
+  playing = false;
+}
+
+function sync(){
+  const t = Math.min(duration, at());
+  effects.forEach(a => { a.currentTime = t; });
+  seek.value = String(Math.round(t));
+  timeOut.textContent = (t / 1000).toFixed(1) + ' / ' + (duration / 1000).toFixed(1) + '秒';
+  slides[active].style.setProperty('--motion-progress', String(Math.min(1, t / duration)));
+  refreshUI(t);
+}
+
+function frame(){
+  sync();
+  if (playing) raf = requestAnimationFrame(frame);
+}
+
+function play(){
+  if (!driver) return;
+  if (at() >= duration && !auto) driver.currentTime = 0;
+  playing = true;
+  driver.play();
+  cancelAnimationFrame(raf);
+  frame();
+}
+
+function pauseClock(){
+  if (driver) driver.pause();
+  playing = false;
+  cancelAnimationFrame(raf); raf = 0;
+  sync();
+}
+
+function gotoTime(v){
+  if (!driver || !enabled) return;
+  pauseClock();
+  driver.currentTime = Math.max(0, Math.min(duration, Number(v) || 0));
+  sync();
+}
+
+function onFinish(){
+  sync();
+  playing = false;
+  if (auto){
+    if (index < slides.length - 1) show(index + 1);
+    else { auto = false; refreshUI(at()); }
+  } else refreshUI(at());
+}
+
+/* ---------- 7. 控制层 UI ---------- */
+function refreshUI(t){
+  const now = t === undefined ? at() : t;
+  pauseBtn.textContent = playing ? '暂停 P' : (now >= duration && !auto ? '重播 P' : '播放 P');
+  pauseBtn.setAttribute('aria-label', playing ? '暂停当前页动效' : '播放当前页动效');
+  toggleBtn.textContent = enabled ? '动效：开 M' : '动效：关 M';
+  toggleBtn.setAttribute('aria-pressed', String(enabled));
+  autoBtn.textContent = auto ? '停止自动 A' : '自动演示 A';
+  autoBtn.setAttribute('aria-pressed', String(auto));
+  document.body.classList.toggle('motion-off', !enabled);
+  seek.disabled = !enabled;
+  pauseBtn.disabled = !enabled && !auto;
+  window.motionState = {
+    slide: active + 1, totalSlides: slides.length,
+    currentTime: now, duration, enabled, playing, autoMode: auto,
+    effectCount: effects.length, holdSeconds: Number(holdSel.value),
+    palette: document.body.dataset.palette || 'teal'
+  };
+}
+
+/* ---------- 8. 事件绑定 ---------- */
+document.getElementById('prev').onclick = () => show(index - 1);
+document.getElementById('next').onclick = () => show(index + 1);
+jump.onchange = () => show(jump.value);
+
+document.getElementById('toggleNotes').onclick = () => {
+  notesEl.hidden = !notesEl.hidden;
+  document.getElementById('toggleNotes').setAttribute('aria-expanded', String(!notesEl.hidden));
+};
+
+async function toggleFullscreen(){
+  try{
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else await document.documentElement.requestFullscreen();
+  }catch(e){
+    document.body.classList.toggle('presentation');
+    fit();
+  }
+}
+document.getElementById('fullscreen').onclick = toggleFullscreen;
+document.getElementById('print').onclick = () => window.print();
+
+replayBtn.onclick = () => { if (enabled) build(active); };
+pauseBtn.onclick  = () => playing ? pauseClock() : play();
+toggleBtn.onclick = () => { enabled = !enabled; build(active); };
+autoBtn.onclick   = () => { auto = !auto; if (auto && index === slides.length - 1) { auto = false; } build(active); };
+holdSel.onchange  = () => { if (auto) build(active); else refreshUI(); };
+paletteSel.onchange = () => { document.body.dataset.palette = paletteSel.value; build(active); };
+
+seek.addEventListener('pointerdown', () => { pauseClock(); });
+seek.addEventListener('input', () => gotoTime(seek.value));
+
+window.addEventListener('keydown', e => {
+  if (['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) return;
+  const k = e.key.toLowerCase();
+  if (['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); show(index + 1); }
+  else if (['ArrowLeft','ArrowUp','PageUp','Backspace'].includes(e.key)){ e.preventDefault(); show(index - 1); }
+  else if (e.key === 'Home'){ e.preventDefault(); show(0); }
+  else if (e.key === 'End'){ e.preventDefault(); show(slides.length - 1); }
+  else if (k === 'n'){ notesEl.hidden = !notesEl.hidden; }
+  else if (k === 'f'){ toggleFullscreen(); }
+  else if (k === 'r'){ if (enabled) build(active); }
+  else if (k === 'p'){ playing ? pauseClock() : play(); }
+  else if (k === 'm'){ toggleBtn.click(); }
+  else if (k === 'a'){ autoBtn.click(); }
+  else if (e.key === 'Escape'){ notesEl.hidden = true; document.body.classList.remove('presentation'); fit(); }
+});
+
+window.addEventListener('resize', fit);
+window.addEventListener('hashchange', () => show(parseInt(location.hash.slice(1), 10) - 1));
+window.addEventListener('fullscreenchange', () => {
+  document.body.classList.toggle('presentation', !!document.fullscreenElement);
+  fit();
+});
+
+/* 触屏左右滑动翻页 */
+let startX = null;
+viewport.addEventListener('pointerdown', e => { startX = e.clientX; });
+viewport.addEventListener('pointerup', e => {
+  if (startX !== null && Math.abs(e.clientX - startX) > 70) show(index + (e.clientX < startX ? 1 : -1));
+  startX = null;
+});
+
+/* 后台标签页自动暂停，回来续播 */
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden){ resumeHidden = playing; pauseClock(); }
+  else if (resumeHidden){ resumeHidden = false; play(); }
+});
+
+/* 打印：临时把主时钟推到末帧，打完还原 */
+window.addEventListener('beforeprint', () => {
+  printState = { t: at(), playing: playing };
+  pauseClock();
+  if (driver){ driver.currentTime = duration; sync(); }
+});
+window.addEventListener('afterprint', () => {
+  if (printState && driver){
+    driver.currentTime = printState.t;
+    sync();
+    if (printState.playing) play();
+    printState = null;
+  }
+});
+
+reduce.addEventListener('change', () => { enabled = !reduce.matches; build(active); });
+
+/* 外部接口：window.motionDeck.play() 之类，便于自动化截图或录制 */
+window.motionDeck = {
+  seek: gotoTime, play: play, pause: pauseClock, replay: () => build(active),
+  setEnabled: v => { enabled = !!v; build(active); },
+  setAuto: v => { auto = !!v; build(active); },
+  setHold: s => { holdSel.value = String(s); if (auto) build(active); },
+  setPalette: p => { paletteSel.value = p; document.body.dataset.palette = p; build(active); },
+  goto: show,
+  getState: () => ({ ...window.motionState })
+};
+
+/* ---------- 9. 启动 ---------- */
+show(parseInt(location.hash.slice(1), 10) - 1 || 0);
+fit();
+})();
+</script>
+</body>
+</html>
